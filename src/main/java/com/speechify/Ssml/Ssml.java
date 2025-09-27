@@ -17,18 +17,65 @@ public class Ssml {
 
     // Parses SSML to a SSMLNode, throwing on invalid SSML
     public static SSMLNode parseSSML(String ssml) {
-        // NOTE: Don't forget to run unescapeXMLChars on the SSMLText
-        throw new UnsupportedOperationException("Implement this function");
+        ssml = ssml.trim();
+        if(!ssml.startsWith("<")){
+            return new SSMLText(unescapeXMLChars(ssml)); //It's an pure text node.
+        }
+
+        //Exract the regex for opening tag.
+        Pattern tagPattern = Pattern.compile("^<([a-zA-Z0-9]+)>");
+        Matcher matcher = tagPattern.matcher(ssml);
+
+        if(!matcher.find()){
+            throw new IllegalArugmentException("Invalid ssml : "+ssml);
+        }
+        String tagName = matcher.group();
+        String closingTag = "</" + tagName + ">";
+
+        if(!ssml.endsWith(closingTag)){
+            throw new IllegalArugmentException("Unmatched tag : "+tagName);
+        }
+        String inner = ssml.substring(matcher.end(), ssml.length() - closingTag.length());
+
+        List<SSMLNode> child = new ArrayList<>();
+        int i = 0;
+        while(i < inner.length()){
+            if(inner.charAt(i) == '<'){ //Find the matching closing tag
+                int depth = 0, j = i;
+                for(; j<inner.length(); j++){
+                    if(inner.charAt(j) == '<' && inner.startsWith("</", j)){
+                        if(depth == 0){break}; 
+                        depth--;
+                    }else if(inner.charAt(j) == '<'){
+                        depth++;                    
+                }
+            }
+                String childTag = inner.substring(i, j + inner.substring(j).indexOf(">")+1);
+                child.add(parseSSML(childTag));
+                i = j + inner.substring(j).indexOf(">")+1;
+        }else{
+                int j = i;
+                while(j < inner.length() && inner.charAt(j) != '<'){
+                    j++;
+                }
+                child.add(new SSMLText(unescapeXMLChars(inner.substring(i, j))));
+                i = j;
+        }
+         return new SSMLElement(tagName, child);   
     }
 
     // Recursively converts SSML node to string and unescapes XML chars
     public static String ssmlNodeToText(SSMLNode node) {
-        throw new UnsupportedOperationException("Implement this function");
-    }
-
-    // Already done for you
-    public static String unescapeXMLChars(String text) {
-        return text.replace("&lt;", "<").replace("&gt;", ">").replace("&amp;", "&");
+        if(node instanceOf SSMLText text){
+            return text.valueOf();
+        }else if(node instanceOf SSMLElement element){
+            StringBuilder sb = new StringBuilder();
+            for(SSMLNode child : element.children()){
+                sb.append(ssmlNodeToText(child));
+            }
+            return sb.toString();
+        }
+        return "";
     }
 
     public sealed interface SSMLNode permits SSMLElement, SSMLText {}
