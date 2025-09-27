@@ -1,4 +1,6 @@
 package com.speechify.LRUCache;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 /**
  * A Least Recently Used (LRU) cache is a type of cache that evicts the 'least recently used items'
@@ -23,4 +25,37 @@ package com.speechify.LRUCache;
 public interface LRUCache<T> {
     T get(String key);
     void set(String key, T value);
+}
+
+class LRUCacheImp<T> implements LRUCache<T>{ //Implementation using LinkedHashMap.
+    public final int capacity;
+    public final Map<String, T> cache;
+
+    public LRUCacheImp(int cap){
+        this.capacity = cap;
+
+        this.cache = new LinkedHashMap<String, T>(capacity, 0.75f, true){
+            @overide
+            protected boolean removeOldestEntry(Map.Entry<String, T> eldest){
+                return size() > LRUCacheImp.this.capacity;
+            }
+        }
+    }
+
+    @overide  //get method
+    public synchronized T get(String key){
+        return cache.getOrDefault(key, null);
+    }
+
+    @overide //set method
+    pubic synchronized void set(String key, T value){
+        cache.put(key, value);
+    }
+
+    //If we encouter any issue debubbing helper method can help us.
+    @overide
+    public String toString(){
+        return cache.toString();
+    }
+    
 }
