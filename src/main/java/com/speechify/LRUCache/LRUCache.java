@@ -48,7 +48,7 @@ class LRUCacheImp<T> implements LRUCache<T>{ //Implementation using LinkedHashMa
     }
 
     @overide //set method
-    pubic synchronized void set(String key, T value){
+    public synchronized void set(String key, T value){
         cache.put(key, value);
     }
 
